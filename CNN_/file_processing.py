@@ -1,26 +1,30 @@
 import os
-from PIL import image
-import numpy as np
+import cv2
 
 # root directory of tumor dataset
 root_dir = r'C:\Users\Ara\Desktop\brain_tumor_dataset'
 
-for image_class in os.listdir(data_dr):
-    # path to categorized images
-    class_dir = os.path.join(root_dir, image_class)
+# initialize lists to hold labels and training data
+labels = ["withTumor", "noTumor"]
+training = []
+img_size = 200
 
-    if os.path.isdir(class_dir):
-        if image_class == "yes":
-            for images in os.listdir(image_class):
-                yes_image = os.path.join(class_dir, images)
-                image_processing = Image.open(yes_image)
-                yes
+# use OpenCV library for image processing
+def createTrainingData():
+    for label in labels:
+        class_dir = os.path.join(root_dir, label)
+        for brain_scan in label:
+            cv_image = cv2.imread(os.path.join(class_dir, brain_scan))
+            modified_cv_image = cv2.resize(cv.image, (img_size, img_size))
+            training.append([modified_cv_image, label])
+            
+createTrainingData()
+
+        
                 
-            
-            
-            
-
+                
     
+        
     
 
 
