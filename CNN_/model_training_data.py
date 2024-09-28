@@ -1,11 +1,12 @@
 import torch.nn as nn
+import torch
 import torch.nn.functional as F
 
 class TumorNeuralNetwork(nn.Module):
     def __init__(self):
         super(TumorNeuralNetwork, self).__init__()
         
-        # Convolutional Layers
+        # initialize convolutional layers, decreasing kernel size from 5 -> 3 every layer to maximize precision
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=5, stride=1, padding=1)
         self.pool1 = nn.MaxPool2d(2, 2) 
 
@@ -15,21 +16,21 @@ class TumorNeuralNetwork(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1)
         self.pool3 = nn.MaxPool2d(2, 2)
 
-        # Flatten Layer
+        # flatten layer
         self.flatten = nn.Flatten()
 
-        # Fully Connected Layers (with 20x20 approximation)
+        # connect layers
         self.fc1 = nn.Linear(in_features=20 * 20 * 256, out_features=1024)
         self.drop1 = nn.Dropout(p=0.3)
 
         self.fc2 = nn.Linear(in_features=1024, out_features=1024)
         self.drop2 = nn.Dropout(p=0.3)
 
-        self.fc3 = nn.Linear(in_features=1024, out_features=10)  # Adjust based on number of classes
+        self.fc3 = nn.Linear(in_features=1024, out_features=10)
         self.drop3 = nn.Dropout(p=0.3)
 
     def forward(self, x):
-        # Pass through convolutional layers
+        # pass through convolutional layers
         x = F.relu(self.conv1(x))
         x = self.pool1(x)
 
@@ -39,10 +40,10 @@ class TumorNeuralNetwork(nn.Module):
         x = F.relu(self.conv3(x))
         x = self.pool3(x)
 
-        # Flatten the tensor for the fully connected layers
+        # flatten the tensor for the fully connected layers
         x = self.flatten(x)
 
-        # Pass through fully connected layers
+        # pass through fully connected layers
         x = F.relu(self.fc1(x))
         x = self.drop1(x)
 
@@ -52,4 +53,7 @@ class TumorNeuralNetwork(nn.Module):
         x = self.fc3(x)
         x = self.drop3(x)
 
+        # compress data into binary for binary classification
+        x = torch.sigmoid(self.fc2(x))
+        
         return x
