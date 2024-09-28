@@ -57,3 +57,4 @@ class TumorNeuralNetwork(nn.Module):
         x = torch.sigmoid(self.fc2(x))
         
         return x
+        
