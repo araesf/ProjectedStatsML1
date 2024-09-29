@@ -1,8 +1,8 @@
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from cnn_layers import TumorNeuralNetwork  # Import the model
-from data_preparation import load_data  # Import the data loader
+from cnn_layering import TumorNeuralNetwork  # Import the model
+from data_processing import load_data  # Import the data loader
 import torch.nn as nn
 
 def train_model(train_loader, model, criterion, optimizer, device):

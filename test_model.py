@@ -3,7 +3,7 @@ from PIL import Image
 from torchvision import transforms
 import requests
 from io import BytesIO
-from cnn_layers import TumorNeuralNetwork  # Your model architecture
+from cnn_layering import TumorNeuralNetwork  # Your model architecture
 
 # Load the trained model
 def load_model(model_path, device):
