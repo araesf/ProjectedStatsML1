@@ -72,8 +72,8 @@ def early_stopping(val_loss, best_val_loss, early_stopping_counter, patience, im
     return False, early_stopping_counter, best_val_loss, False  # No early stop, no significant improvement
 
 if __name__ == "__main__":
-    root_dir = r'C:\Users\Ara\Desktop\brain_tumor_dataset'
-    labels = ["withTumor", "withoutTumor"]
+    root_dir = r'C:\Users\Ara\Desktop\archive'
+    labels = ["glioma", "meningioma", "notumor", "pituitary"]
 
     # Load the train and validation datasets
     train_dataset, val_dataset = load_data(root_dir, labels)

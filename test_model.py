@@ -63,7 +63,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load the trained model from a specific epoch checkpoint
-    model_path = 'best_model_epoch_27_val_loss_0.5230.pth'  # Ensure this path is correct
+    model_path = 'best_model_epoch_17_val_loss_0.1581.pth'  # Ensure this path is correct
     model = load_model(model_path, device)
 
     # Get the MRI image URL from the user

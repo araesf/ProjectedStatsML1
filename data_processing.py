@@ -4,8 +4,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-root_dir = r'C:\Users\Ara\Desktop\archive\Testing'
-
 class TumorDataProcessor:
     def __init__(self, root_dir, labels, img_size=200):
         self.root_dir = root_dir
@@ -51,6 +49,12 @@ class TumorDataProcessor:
                         print(f'Added scan to validation list: {brain_scan}')
                     else:
                         print(f'Failed to load image: {brain_scan}')
+    
+    def get_training_data(self):
+        return self.training_data
+
+    def get_validation_data(self):
+        return self.validation_data
 
 
 def convert_to_tensor(data):
@@ -77,14 +81,19 @@ def convert_to_tensor(data):
 
 
 def load_data(root_dir, labels):
+    # Initialize the data processor
     processor = TumorDataProcessor(root_dir=root_dir, labels=labels, img_size=200)
-    processor.create_training_data()
-    training_data = processor.get_training_data()
     
-    val_size = len(training_data) - train_size
-    train_data, val_data = torch.utils.data.random_split(training_data, [train_size, val_size])
+    # Create the training and validation data separately
+    processor.create_training_data()
+    processor.create_validation_data()
 
-    train_dataset = convert_to_tensor(train_data)
-    val_dataset = convert_to_tensor(val_data)
+    # Get the processed training and validation data
+    training_data = processor.get_training_data()
+    validation_data = processor.get_validation_data()
+
+    # Convert the datasets into tensor datasets
+    train_dataset = convert_to_tensor(training_data)
+    val_dataset = convert_to_tensor(validation_data)
 
     return train_dataset, val_dataset
