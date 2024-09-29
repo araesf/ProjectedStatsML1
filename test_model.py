@@ -3,13 +3,13 @@ from PIL import Image
 from torchvision import transforms
 import requests
 from io import BytesIO
-from cnn_layering import TumorNeuralNetwork  # Your model architecture
+from cnn_layering import TumorNeuralNetwork
 
 # Load the trained model
 def load_model(model_path, device):
     model = TumorNeuralNetwork().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()
+    model.eval()  # Set the model to evaluation mode
     return model
 
 # Preprocess the image: resizing, converting to tensor, and normalizing
@@ -19,8 +19,7 @@ def preprocess_image(image, img_size=200):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
     ])
-    
-    image = transform(image).unsqueeze(0)
+    image = transform(image).unsqueeze(0)  # Add batch dimension
     return image
 
 # Download the image from a URL
@@ -39,7 +38,6 @@ def load_image_from_url(url):
 
 # Classify if the MRI has a tumor or not
 def classify_mri_from_url(url, model, device):
-    # Download and preprocess the image
     image = load_image_from_url(url)
     if image is None:
         print("Could not load the image. Please provide a valid image URL.")
@@ -48,20 +46,24 @@ def classify_mri_from_url(url, model, device):
     # Preprocess the image
     image_tensor = preprocess_image(image)
     image_tensor = image_tensor.to(device)
+    
     with torch.no_grad():
         output = model(image_tensor)
-        print(f"Raw model output: {output.item()}")  # Print raw model output
+        raw_output = output.item()
+        print(f"Raw model output (before rounding): {raw_output}")  # Print raw model output
         
-        prediction = torch.round(output.squeeze())  # Binary classification: round to 0 or 1
+        # Binary classification based on a threshold
+        prediction = torch.round(output.squeeze())
+        print(f"Rounded prediction: {prediction.item()}")  # Print rounded prediction (0 or 1)
+        
     return "Tumor Detected" if prediction.item() == 1 else "No Tumor"
-
 
 if __name__ == "__main__":
     # Set device (GPU or CPU)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load the trained model
-    model_path = 'best_model.pth'  # Path to the saved model
+    # Load the trained model from a specific epoch checkpoint
+    model_path = 'best_model_epoch_27_val_loss_0.5230.pth'  # Ensure this path is correct
     model = load_model(model_path, device)
 
     # Get the MRI image URL from the user

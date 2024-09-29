@@ -30,6 +30,7 @@ def train_model(train_loader, model, criterion, optimizer, device):
 
         running_loss += loss.item()
     
+    # Return the average loss for the epoch
     return running_loss / len(train_loader)
 
 def validate_model(val_loader, model, criterion, device):
@@ -49,10 +50,29 @@ def validate_model(val_loader, model, criterion, device):
     
     return running_loss / len(val_loader)
 
-# Ensure 'model' and data loaders are defined before the training loop
+def save_checkpoint(model, epoch, best_val_loss, model_save_path):
+    model_save_path = f"{model_save_path}_epoch_{epoch+1}_val_loss_{best_val_loss:.4f}.pth"
+    torch.save(model.state_dict(), model_save_path)
+    print(f"Model checkpoint saved at: {model_save_path}")
+
+# Early stopping function if improvement starts showing signs of overfitting
+def early_stopping(val_loss, best_val_loss, early_stopping_counter, patience, improvement_threshold=0.005):
+    if (best_val_loss - val_loss) > improvement_threshold:
+        best_val_loss = val_loss
+        early_stopping_counter = 0
+
+        # Flag to indicate a significant improvement
+        return False, early_stopping_counter, best_val_loss, True 
+    else:
+        early_stopping_counter += 1
+    
+    if early_stopping_counter >= patience:
+        return True, early_stopping_counter, best_val_loss, False  # Early stop triggered
+    
+    return False, early_stopping_counter, best_val_loss, False  # No early stop, no significant improvement
+
 if __name__ == "__main__":
-    # Load data
-    root_dir = r'C:\Users\Ara\Desktop\brain_tumor_dataset'  # Adjust the path
+    root_dir = r'C:\Users\Ara\Desktop\brain_tumor_dataset'
     labels = ["withTumor", "withoutTumor"]
 
     # Load the train and validation datasets
@@ -68,41 +88,45 @@ if __name__ == "__main__":
     # Initialize model, optimizer, and loss function
     model = TumorNeuralNetwork().to(device)
     
-    # Use a lower learning rate and add weight decay (L2 regularization)
-    optimizer = optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-5)
+    # Use Adam optimizer with L2 regularization
+    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-3)
     
     # Binary Cross-Entropy Loss for binary classification
     criterion = nn.BCELoss()
 
-    # Learning rate scheduler without verbose=True
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=2)
+    # Learning rate scheduler with ReduceLROnPlateau
+    # Learning rate scheduler with more patience before reducing the LR
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.01, patience=5)
+
 
     # Initialize early stopping parameters
     best_val_loss = float('inf')
-    patience = 3
+    patience = 10
     early_stopping_counter = 0
+    model_save_path = 'best_model'
 
-    # Inside the training loop, manually print the learning rate
-    n_epochs = 20
+    # Training loop
+    n_epochs = 100
     for epoch in range(n_epochs):
         train_loss = train_model(train_loader, model, criterion, optimizer, device)
         val_loss = validate_model(val_loader, model, criterion, device)
 
-        # Learning rate scheduling based on validation loss
+        # Step the learning rate scheduler based on validation loss
         scheduler.step(val_loss)
 
-        # Print the current learning rate using get_last_lr()
+        # Print the current learning rate and losses
         current_lr = scheduler.optimizer.param_groups[0]['lr']
         print(f"Epoch {epoch+1}/{n_epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Learning Rate: {current_lr:.6f}")
 
-        # Early stopping logic
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            early_stopping_counter = 0
-            torch.save(model.state_dict(), 'best_model.pth')  # Save the best model
-        else:
-            early_stopping_counter += 1
+        # Early stopping check
+        stop, early_stopping_counter, best_val_loss, significant_improvement = early_stopping(
+            val_loss, best_val_loss, early_stopping_counter, patience, improvement_threshold=0.005
+        )
 
-        if early_stopping_counter >= patience:
-            print("Early stopping triggered")
+        # Save the best model only if there is a significant improvement
+        if significant_improvement:
+            save_checkpoint(model, epoch, best_val_loss, model_save_path)
+        
+        if stop:
+            print(f"Early stopping triggered at epoch {epoch+1}. Best validation loss: {best_val_loss:.4f}")
             break

@@ -17,8 +17,8 @@ class TumorDataProcessor:
             for brain_scan in os.listdir(class_dir):
                 img_path = os.path.join(class_dir, brain_scan)
                 cv_image = cv2.imread(img_path)
-                modified_cv_image = cv2.resize(cv_image, (self.img_size, self.img_size))
-                if modified_cv_image is not None:
+                if cv_image is not None:
+                    modified_cv_image = cv2.resize(cv_image, (self.img_size, self.img_size))
                     self.training_data.append([modified_cv_image, label])
                     print(f'Added scan to training list: {brain_scan}')
 
